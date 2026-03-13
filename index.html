@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Are You Feeling Today?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2d3561 0%, #1a1f3a 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            font-weight: 600;
+        }
+
+        .vote-counter {
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            height: calc(100vh - 80px);
+            gap: 0;
+        }
+
+        .quadrant {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        .quadrant:hover {
+            transform: scale(1.02);
+        }
+
+        .quadrant.selected {
+            border: 5px solid #fff;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.8), inset 0 0 40px rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+            z-index: 5;
+        }
+
+        .sunny {
+            background: linear-gradient(135deg, #ffd89b 0%, #ff9a56 100%);
+        }
+
+        .partly-cloudy {
+            background: linear-gradient(135deg, #a8c0ff 0%, #7fa3d1 100%);
+        }
+
+        .rainy {
+            background: linear-gradient(135deg, #4facfe 0%, #00a8e8 100%);
+        }
+
+        .stormy {
+            background: linear-gradient(135deg, #667eea 0%, #4a5568 100%);
+        }
+
+        .emoji {
+            font-size: 5em;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .mood-name {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1a1f3a;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+        }
+
+        .mood-description {
+            font-size: 1.3em;
+            color: #2d3561;
+            font-weight: 500;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        .results-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .results-card h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            color: #2d3561;
+        }
+
+        .result-item {
+            margin: 25px 0;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .progress-bar {
+            height: 40px;
+            background-color: #e0e0e0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.8s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .progress-fill.sunny-bar {
+            background: linear-gradient(90deg, #ffd89b 0%, #ff9a56 100%);
+        }
+
+        .progress-fill.partly-cloudy-bar {
+            background: linear-gradient(90deg, #a8c0ff 0%, #7fa3d1 100%);
+        }
+
+        .progress-fill.rainy-bar {
+            background: linear-gradient(90deg, #4facfe 0%, #00a8e8 100%);
+        }
+
+        .progress-fill.stormy-bar {
+            background: linear-gradient(90deg, #667eea 0%, #4a5568 100%);
+        }
+
+        .total-votes-result {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 1.8em;
+            color: #2d3561;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            display: block;
+            margin: 30px auto 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>How Are You Feeling Today? 🌤️</h1>
+        <div class="header-right">
+            <div class="vote-counter">Total Votes: <span id="headerVoteCount">0</span></div>
+            <button class="stop-btn" onclick="showResults()">Stop Survey</button>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="quadrant sunny" onclick="vote('sunny')">
+            <div class="emoji">🌞</div>
+            <div class="mood-name">Sunny</div>
+            <div class="mood-description">Very Good!</div>
+        </div>
+
+        <div class="quadrant partly-cloudy" onclick="vote('partly-cloudy')">
+            <div class="emoji">⛅</div>
+            <div class="mood-name">Partly Cloudy</div>
+            <div class="mood-description">Could be better</div>
+        </div>
+
+        <div class="quadrant rainy" onclick="vote('rainy')">
+            <div class="emoji">🌧️</div>
+            <div class="mood-name">Rainy</div>
+            <div class="mood-description">Not doing OK</div>
+        </div>
+
+        <div class="quadrant stormy" onclick="vote('stormy')">
+            <div class="emoji">🌩️</div>
+            <div class="mood-name">Stormy</div>
+            <div class="mood-description">Bad day</div>
+        </div>
+    </div>
+
+    <div class="overlay" id="resultsOverlay">
+        <div class="results-card">
+            <h2>📊 Survey Results</h2>
+
+            <div class="result-item">
+                <div class="result-header">
+                    <span>🌞 Sunny</span>
+                    <span id="sunny-result">0 votes (0%)</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="sunny-bar" class="progress-fill sunny-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-header">
+                    <span>⛅ Partly Cloudy</span>
+                    <span id="partly-cloudy-result">0 votes (0%)</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="partly-cloudy-bar" class="progress-fill partly-cloudy-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-header">
+                    <span>🌧️ Rainy</span>
+                    <span id="rainy-result">0 votes (0%)</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="rainy-bar" class="progress-fill rainy-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-header">
+                    <span>🌩️ Stormy</span>
+                    <span id="stormy-result">0 votes (0%)</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="stormy-bar" class="progress-fill stormy-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="total-votes-result">Total Votes: <span id="totalVotesResult">0</span></div>
+
+            <button class="close-btn" onclick="closeResults()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let votes = JSON.parse(localStorage.getItem('moodVotes')) || {
+            sunny: 0,
+            'partly-cloudy': 0,
+            rainy: 0,
+            stormy: 0
+        };
+
+        let hasVoted = localStorage.getItem('hasVoted') === 'true';
+
+        function updateHeaderCount() {
+            const total = Object.values(votes).reduce((sum, count) => sum + count, 0);
+            document.getElementById('headerVoteCount').textContent = total;
+        }
+
+        function vote(mood) {
+            document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('selected'));
+            
+            event.currentTarget.classList.add('selected');
+            
+            votes[mood]++;
+            localStorage.setItem('moodVotes', JSON.stringify(votes));
+            localStorage.setItem('hasVoted', 'true');
+            hasVoted = true;
+            
+            updateHeaderCount();
+        }
+
+        function showResults() {
+            const total = Object.values(votes).reduce((sum, count) => sum + count, 0);
+            
+            Object.keys(votes).forEach(mood => {
+                const count = votes[mood];
+                const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                
+                document.getElementById(`${mood}-result`).textContent = `${count} votes (${percentage}%)`;
+                document.getElementById(`${mood}-bar`).style.width = `${percentage}%`;
+            });
+            
+            document.getElementById('totalVotesResult').textContent = total;
+            document.getElementById('resultsOverlay').classList.add('active');
+        }
+
+        function closeResults() {
+            document.getElementById('resultsOverlay').classList.remove('active');
+        }
+
+        updateHeaderCount();
+
+        if (hasVoted) {
+            const lastVote = Object.keys(votes).find(mood => votes[mood] > 0);
+            if (lastVote) {
+                document.querySelector(`.${lastVote}`).classList.add('selected');
+            }
+        }
+    </script>
+</body>
+</html>
